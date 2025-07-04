@@ -380,7 +380,7 @@ export default function Component() {
       setIsMobile(mobile)
       setRealViewportHeight(window.innerHeight)
       // En desktop empezar abierto, en mobile cerrado
-      setShowPanel(!mobile)
+      setShowPanel(true)
     }
     
     updateDimensions()
