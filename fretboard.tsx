@@ -374,7 +374,7 @@ export default function Component() {
   const [nextPlayingNote, setNextPlayingNote] = useState<string>("")
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const [showPanel, setShowPanel] = useState(false)
+  const [showPanel, setShowPanel] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [realViewportHeight, setRealViewportHeight] = useState(0)
 
@@ -384,7 +384,7 @@ export default function Component() {
       setIsMobile(mobile)
       setRealViewportHeight(window.innerHeight)
       // En desktop empezar abierto, en mobile cerrado
-      setShowPanel(!mobile)
+      setShowPanel(true)
     }
     
     updateDimensions()
