@@ -193,7 +193,6 @@ const INSTRUMENT_TUNINGS = {
       "drop-d": { name: "Drop D (F#BEADGBD)", notes: ["D4", "B3", "G3", "D3", "A2", "E2", "B1", "F#1"] },
       "eadgcfad": { name: "EADGCFAD", notes: ["D4", "A3", "F3", "C3", "G2", "D2", "A1", "E1"] },
       "dadadgbe": { name: "DADADGBE", notes: ["E4", "B3", "G3", "D3", "A2", "D2", "A1", "D1"] },
-      "f#beadgbe": { name: "F#BEADGBE", notes: ["E4", "B3", "G3", "D3", "A2", "E2", "B1", "F#1"] },
     },
   },
   ukulele: {
