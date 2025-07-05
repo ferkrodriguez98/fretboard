@@ -171,6 +171,7 @@ const INSTRUMENT_TUNINGS = {
       standard: { name: "Standard (EADGBE)", notes: ["E4", "B3", "G3", "D3", "A2", "E2"] },
       "drop-d": { name: "Drop D (DADGBE)", notes: ["E4", "B3", "G3", "D3", "A2", "D2"] },
       "drop-c": { name: "Drop C (CGCFAD)", notes: ["D4", "A3", "F3", "C3", "G2", "C2"] },
+      "d-standard": { name: "D Standard (DGCFAD)", notes: ["D4", "A3", "F3", "C3", "G2", "D2"] },
       dadgad: { name: "DADGAD", notes: ["D4", "A3", "G3", "D3", "A2", "D2"] },
       "open-g": { name: "Open G (DGDGBD)", notes: ["D4", "B3", "G3", "D3", "G2", "D2"] },
       "open-d": { name: "Open D (DADF#AD)", notes: ["D4", "A3", "F#3", "D3", "A2", "D2"] },
@@ -190,6 +191,9 @@ const INSTRUMENT_TUNINGS = {
       standard: { name: "Standard (F#BEADGBE)", notes: ["E4", "B3", "G3", "D3", "A2", "E2", "B1", "F#1"] },
       "drop-e": { name: "Drop E (EBEADGBE)", notes: ["E4", "B3", "G3", "D3", "A2", "E2", "B1", "E1"] },
       "drop-d": { name: "Drop D (F#BEADGBD)", notes: ["D4", "B3", "G3", "D3", "A2", "E2", "B1", "F#1"] },
+      "eadgcfad": { name: "EADGCFAD", notes: ["D4", "A3", "F3", "C3", "G2", "D2", "A1", "E1"] },
+      "dadadgbe": { name: "DADADGBE", notes: ["E4", "B3", "G3", "D3", "A2", "D2", "A1", "D1"] },
+      "f#beadgbe": { name: "F#BEADGBE", notes: ["E4", "B3", "G3", "D3", "A2", "E2", "B1", "F#1"] },
     },
   },
   ukulele: {
