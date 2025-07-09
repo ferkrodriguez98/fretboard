@@ -116,6 +116,8 @@ export const PRACTICE_PATTERNS = {
   descending: { name: "Aguda → Grave", direction: "down" },
   upDown: { name: "Subiendo y Bajando", direction: "up-down" },
   downUp: { name: "Bajando y Subiendo", direction: "down-up" },
+  "thirds-ascending": { name: "Terceras Ascendentes", direction: "up" },
+  "thirds-descending": { name: "Terceras Descendentes", direction: "down" },
 }
 
 export const INSTRUMENT_TUNINGS = {

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Play, Pause, ChevronDown } from "lucide-react"
 import FretboardHeader from "@/components/FretboardHeader"
 import FretboardView from "@/components/ui/FretboardView"
+import { PRACTICE_PATTERNS } from "@/lib/constants"
+import { generatePracticeSequence } from "@/lib/musicUtils"
 
 // Notas cromáticas
 const CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -131,13 +133,7 @@ const theme = {
     legendTextMuted: "text-gray-500",
 }
 
-// PATRONES DE PRÁCTICA
-const PRACTICE_PATTERNS = {
-  ascending: { name: "Grave → Aguda", direction: "up" },
-  descending: { name: "Aguda → Grave", direction: "down" },
-  upDown: { name: "Subiendo y Bajando", direction: "up-down" },
-  downUp: { name: "Bajando y Subiendo", direction: "down-up" },
-}
+// PATRONES DE PRÁCTICA importados desde constants.ts
 
 // NUEVOS VALORES DE NOTA (SUBDIVISIONES)
 const NOTE_VALUES = {
@@ -305,35 +301,7 @@ const getAvailableNotesWithOctaves = (tuning: string[], scaleIntervals: number[]
   })
 }
 
-// Función para generar secuencia de práctica con octavas específicas
-const generatePracticeSequence = (
-  startNoteWithOctave: string,
-  endNoteWithOctave: string,
-  availableNotes: string[],
-  pattern: string,
-): string[] => {
-  const startIndex = availableNotes.indexOf(startNoteWithOctave)
-  const endIndex = availableNotes.indexOf(endNoteWithOctave)
-
-  if (startIndex === -1 || endIndex === -1) return []
-
-  const minIndex = Math.min(startIndex, endIndex)
-  const maxIndex = Math.max(startIndex, endIndex)
-  const rangeNotes = availableNotes.slice(minIndex, maxIndex + 1)
-
-  switch (pattern) {
-    case "ascending":
-      return rangeNotes
-    case "descending":
-      return [...rangeNotes].reverse()
-    case "upDown":
-      return [...rangeNotes, ...rangeNotes.slice(1, -1).reverse()]
-    case "downUp":
-      return [...rangeNotes.reverse(), ...rangeNotes.slice(1, -1)]
-    default:
-      return rangeNotes
-  }
-}
+// Función generatePracticeSequence ahora está en lib/musicUtils.ts
 
 // Función para calcular la nota exacta en un traste
 const calculateNoteAtFret = (baseNote: string, fret: number): string => {
@@ -747,11 +715,19 @@ export default function Component() {
   // Generar secuencia cuando cambian los parámetros
   useEffect(() => {
     if (startNote && endNote && availableNotes.length > 0) {
-      const sequence = generatePracticeSequence(startNote, endNote, availableNotes, practicePattern)
+      const currentScale = SCALES[selectedScale as keyof typeof SCALES]
+      const sequence = generatePracticeSequence(
+        startNote, 
+        endNote, 
+        availableNotes, 
+        practicePattern,
+        currentScale.intervals,
+        selectedRoot
+      )
       setPracticeSequence(sequence)
       setCurrentNoteIndex(0)
     }
-  }, [startNote, endNote, availableNotes, practicePattern])
+  }, [startNote, endNote, availableNotes, practicePattern, selectedScale, selectedRoot])
 
   // Manejar reproducción automática de la práctica
   useEffect(() => {

@@ -28,6 +28,8 @@ export const generatePracticeSequence = (
   endNoteWithOctave: string,
   availableNotes: string[],
   pattern: string,
+  scaleIntervals?: number[],
+  rootNote?: string,
 ): string[] => {
   const startIndex = availableNotes.indexOf(startNoteWithOctave)
   const endIndex = availableNotes.indexOf(endNoteWithOctave)
@@ -35,6 +37,7 @@ export const generatePracticeSequence = (
   const minIndex = Math.min(startIndex, endIndex)
   const maxIndex = Math.max(startIndex, endIndex)
   const rangeNotes = availableNotes.slice(minIndex, maxIndex + 1)
+  
   switch (pattern) {
     case "ascending":
       return rangeNotes
@@ -44,9 +47,88 @@ export const generatePracticeSequence = (
       return [...rangeNotes, ...rangeNotes.slice(1, -1).reverse()]
     case "downUp":
       return [...rangeNotes.reverse(), ...rangeNotes.slice(1, -1)]
+    case "thirds-ascending":
+      return generateThirdsSequence(rangeNotes, scaleIntervals!, rootNote!, true, availableNotes)
+    case "thirds-descending":
+      return generateThirdsSequence(rangeNotes, scaleIntervals!, rootNote!, false, availableNotes)
     default:
       return rangeNotes
   }
+}
+
+// Función auxiliar para generar secuencias de terceras
+const generateThirdsSequence = (rangeNotes: string[], scaleIntervals: number[], rootNote: string, ascending: boolean, allAvailableNotes: string[]): string[] => {
+  const sequence: string[] = []
+  
+  // Crear el mapa de la escala con todas las notas ordenadas por grado de escala
+  const scaleNotesMap = buildScaleNotesMap(scaleIntervals, rootNote)
+  
+  // Las notas del rango ya vienen ordenadas por frecuencia desde generatePracticeSequence
+  // Solo necesitamos aplicar la dirección (ascendente o descendente)
+  const workingNotes = ascending ? rangeNotes : [...rangeNotes].reverse()
+  
+  for (const currentNote of workingNotes) {
+    // Buscar la tercera en TODAS las notas disponibles del instrumento
+    const third = findThirdInScale(currentNote, allAvailableNotes, scaleNotesMap)
+    if (third) {
+      sequence.push(currentNote, third)
+    }
+  }
+  
+  return sequence
+}
+
+// Función para construir un mapa de nota -> grado de escala
+const buildScaleNotesMap = (scaleIntervals: number[], rootNote: string): { [note: string]: number } => {
+  const map: { [note: string]: number } = {}
+  const rootIndex = CHROMATIC_NOTES.indexOf(rootNote)
+  
+  scaleIntervals.forEach((interval, degree) => {
+    const noteIndex = (rootIndex + interval) % 12
+    const noteName = CHROMATIC_NOTES[noteIndex]
+    map[noteName] = degree
+  })
+  
+  return map
+}
+
+// Función para encontrar la tercera de una nota en la escala específica
+const findThirdInScale = (currentNoteWithOctave: string, availableNotes: string[], scaleNotesMap: { [note: string]: number }): string | null => {
+  const currentNoteName = currentNoteWithOctave.slice(0, -1)
+  const currentOctave = parseInt(currentNoteWithOctave.slice(-1))
+  const currentDegree = scaleNotesMap[currentNoteName]
+  
+  if (currentDegree === undefined) return null
+  
+  // Buscar todas las notas disponibles que sean terceras de la nota actual
+  const possibleThirds = availableNotes.filter(noteWithOctave => {
+    const noteName = noteWithOctave.slice(0, -1)
+    const octave = parseInt(noteWithOctave.slice(-1))
+    const degree = scaleNotesMap[noteName]
+    
+    if (degree === undefined) return false
+    
+    // La tercera está 2 grados más arriba en la escala
+    const expectedThirdDegree = (currentDegree + 2) % Object.keys(scaleNotesMap).length
+    
+    // Verificar si es la tercera correcta y está en un rango de octava apropiado
+    return degree === expectedThirdDegree && octave >= currentOctave && octave <= currentOctave + 1
+  })
+  
+  if (possibleThirds.length === 0) return null
+  
+  // Preferir la tercera más cercana en altura
+  possibleThirds.sort((a, b) => {
+    const freqA = NOTE_TO_FREQUENCY[a] || 0
+    const freqB = NOTE_TO_FREQUENCY[b] || 0
+    const currentFreq = NOTE_TO_FREQUENCY[currentNoteWithOctave] || 0
+    
+    const distA = Math.abs(freqA - currentFreq)
+    const distB = Math.abs(freqB - currentFreq)
+    return distA - distB
+  })
+  
+  return possibleThirds[0]
 }
 
 export const calculateNoteAtFret = (baseNote: string, fret: number): string => {

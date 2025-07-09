@@ -6,6 +6,8 @@ export function usePracticeSequence({
   endNote,
   availableNotes,
   practicePattern,
+  scaleIntervals,
+  rootNote,
   bpm,
   playNoteSound,
   audioContextRef,
@@ -14,6 +16,8 @@ export function usePracticeSequence({
   endNote: string
   availableNotes: string[]
   practicePattern: string
+  scaleIntervals: number[]
+  rootNote: string
   bpm: number
   playNoteSound: (note: string, duration?: number, audioContextRef?: React.MutableRefObject<AudioContext | null>) => void
   audioContextRef: React.MutableRefObject<AudioContext | null>
@@ -28,11 +32,18 @@ export function usePracticeSequence({
   // Generar secuencia cuando cambian los parámetros
   useEffect(() => {
     if (startNote && endNote && availableNotes.length > 0) {
-      const sequence = generatePracticeSequence(startNote, endNote, availableNotes, practicePattern)
+      const sequence = generatePracticeSequence(
+        startNote, 
+        endNote, 
+        availableNotes, 
+        practicePattern,
+        scaleIntervals,
+        rootNote
+      )
       setPracticeSequence(sequence)
       setCurrentNoteIndex(0)
     }
-  }, [startNote, endNote, availableNotes, practicePattern])
+  }, [startNote, endNote, availableNotes, practicePattern, scaleIntervals, rootNote])
 
   // Manejar reproducción automática de la práctica
   useEffect(() => {
