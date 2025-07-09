@@ -139,6 +139,13 @@ const PRACTICE_PATTERNS = {
   downUp: { name: "Bajando y Subiendo", direction: "down-up" },
 }
 
+// NUEVOS VALORES DE NOTA (SUBDIVISIONES)
+const NOTE_VALUES = {
+  quarter: { name: "Negra", subdivision: 1 },
+  eighth: { name: "Corchea", subdivision: 2 },
+  sixteenth: { name: "Semicorchea", subdivision: 4 },
+}
+
 // TODOS LOS INSTRUMENTOS RESTAURADOS
 const INSTRUMENT_TUNINGS = {
   "bass-4": {
@@ -364,6 +371,7 @@ export default function Component() {
   const [practiceMode, setPracticeMode] = useState(false)
   const [bpm, setBpm] = useState(60)
   const [inputValue, setInputValue] = useState(bpm.toString())
+  const [noteValue, setNoteValue] = useState("quarter") // subdivision seleccionada
   const [startNote, setStartNote] = useState("")
   const [endNote, setEndNote] = useState("")
   const [practicePattern, setPracticePattern] = useState("ascending")
@@ -372,6 +380,8 @@ export default function Component() {
   const [currentPlayingNote, setCurrentPlayingNote] = useState<string>("")
   const [nextPlayingNote, setNextPlayingNote] = useState<string>("")
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const clickIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const beatCounterRef = useRef(0)
   const audioContextRef = useRef<AudioContext | null>(null)
   const [showPanel, setShowPanel] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
@@ -615,6 +625,38 @@ export default function Component() {
     }
   }, [])
 
+  // === METRONOMO CLICK ===
+  const playClickSound = useCallback(() => {
+    try {
+      if (!audioContextRef.current || audioContextRef.current.state === "closed") {
+        audioContextRef.current = new (window.AudioContext || ((window as any).webkitAudioContext as typeof AudioContext))()
+      }
+      const audioContext = audioContextRef.current
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume()
+      }
+
+      const latency = 0.15
+      const startTime = audioContext.currentTime + latency
+      const osc = audioContext.createOscillator()
+      osc.type = "square"
+      osc.frequency.setValueAtTime(2000, startTime) // click agudo
+
+      const gain = audioContext.createGain()
+      gain.gain.setValueAtTime(1, startTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.05)
+
+      osc.connect(gain)
+      gain.connect(audioContext.destination)
+
+      osc.start(startTime)
+      osc.stop(startTime + 0.05)
+    } catch (error) {
+      console.log("Audio no disponible:", error)
+    }
+  }, [])
+
   // Limpiar AudioContext al desmontar
   useEffect(() => {
     const audioCtx = audioContextRef.current
@@ -714,27 +756,44 @@ export default function Component() {
   // Manejar reproducción automática de la práctica
   useEffect(() => {
     if (practiceMode && practiceSequence.length > 0) {
-      const intervalMs = 60000 / bpm
+      const beatInterval = 60000 / bpm // intervalo de negra
+      const intervalMs = beatInterval / NOTE_VALUES[noteValue as keyof typeof NOTE_VALUES].subdivision
       const noteDuration = intervalMs / 1000
-      intervalRef.current = setInterval(() => {
-        setCurrentNoteIndex(prevIndex => {
-          const currentNote = practiceSequence[prevIndex]
-          const nextIndex = (prevIndex + 1) % practiceSequence.length
-          const nextNote = practiceSequence[nextIndex]
+      beatCounterRef.current = 0
+      
+      // Primera nota inmediata
+      const firstNote = practiceSequence[0]
+      setCurrentPlayingNote(firstNote)
+      if (firstNote) {
+        playNoteSound(firstNote, noteDuration)
+      }
+      setCurrentNoteIndex(1) // empezar desde la segunda nota
+      beatCounterRef.current = 1
+      
+      // Continuar inmediatamente con el resto
+        intervalRef.current = setInterval(() => {
+          setCurrentNoteIndex(prevIndex => {
+            const currentNote = practiceSequence[prevIndex]
+            const nextIndex = (prevIndex + 1) % practiceSequence.length
+            const nextNote = practiceSequence[nextIndex]
 
-          // 1. Actualizar el estado visual PRIMERO
-          setCurrentPlayingNote(currentNote)
-          setNextPlayingNote(nextNote)
+            // Click se maneja por separado, no aca
 
-          // 2. Reproducir el sonido DESPUÉS
-          if (currentNote) {
-            playNoteSound(currentNote, noteDuration)
-          }
+            // 1. Actualizar el estado visual PRIMERO
+            setCurrentPlayingNote(currentNote)
+            setNextPlayingNote(nextNote)
 
-          // 3. Preparar el índice para el siguiente ciclo
-          return nextIndex
-        })
-      }, intervalMs)
+            // 2. Reproducir el sonido DESPUÉS
+            if (currentNote) {
+              playNoteSound(currentNote, noteDuration)
+            }
+
+            // 3. Preparar el índice para el siguiente ciclo
+            beatCounterRef.current += 1
+            return nextIndex
+          })
+        }, intervalMs)
+      
       return () => {
         if (intervalRef.current) clearInterval(intervalRef.current)
       }
@@ -743,7 +802,37 @@ export default function Component() {
       setCurrentPlayingNote("")
       setNextPlayingNote("")
     }
-  }, [practiceMode, bpm, practiceSequence, playNoteSound])
+  }, [practiceMode, bpm, practiceSequence, playNoteSound, noteValue])
+
+  // Metronomo separado - SIEMPRE en negras
+  useEffect(() => {
+    // Limpiar cualquier intervalo previo
+    if (clickIntervalRef.current) {
+      clearInterval(clickIntervalRef.current)
+      clickIntervalRef.current = null
+    }
+    
+    if (practiceMode) {
+      const beatInterval = 60000 / bpm // siempre negras
+      const subdivision = NOTE_VALUES[noteValue as keyof typeof NOTE_VALUES].subdivision
+      const intervalMs = beatInterval / subdivision
+      
+      // Primer click inmediato
+      playClickSound()
+      
+      // Iniciar setInterval inmediatamente para clicks siguientes
+      clickIntervalRef.current = setInterval(() => {
+        playClickSound()
+      }, beatInterval)
+      
+      return () => {
+        if (clickIntervalRef.current) clearInterval(clickIntervalRef.current)
+      }
+    } else {
+      if (clickIntervalRef.current) clearInterval(clickIntervalRef.current)
+    }
+  }, [practiceMode, bpm, playClickSound, noteValue])
+
 
   return (
     <div 
@@ -824,6 +913,8 @@ export default function Component() {
                         inputValue={inputValue}
                         setInputValue={setInputValue}
                         setBpm={setBpm}
+                        noteValue={noteValue}
+                        setNoteValue={setNoteValue}
                         theme={theme}
                       />
                       <div className="flex gap-4 items-center justify-center flex-wrap">
@@ -906,6 +997,7 @@ export default function Component() {
               </SelectContent>
             </Select>
 
+                        
                         <button
                           onClick={togglePracticeMode}
                           className={`p-2 rounded-full transition-colors ${theme.selectBg} ${theme.selectBorder} ${theme.selectText} ${theme.selectHover} border`}
@@ -933,6 +1025,8 @@ export default function Component() {
                   inputValue={inputValue}
                   setInputValue={setInputValue}
                   setBpm={setBpm}
+                  noteValue={noteValue}
+                  setNoteValue={setNoteValue}
                   theme={theme}
                 />
                 <div className="flex gap-4 items-center justify-center flex-wrap">
@@ -1015,6 +1109,7 @@ export default function Component() {
                 </SelectContent>
               </Select>
 
+                  
                   <button
                     onClick={togglePracticeMode}
                     className={`p-2 rounded-full transition-colors ${theme.selectBg} ${theme.selectBorder} ${theme.selectText} ${theme.selectHover} border`}

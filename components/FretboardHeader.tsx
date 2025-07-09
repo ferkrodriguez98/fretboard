@@ -11,6 +11,8 @@ interface FretboardHeaderProps {
   inputValue: string
   setInputValue: (v: string) => void
   setBpm: (v: number) => void
+  noteValue: string
+  setNoteValue: (v: string) => void
   theme: any
 }
 
@@ -24,6 +26,8 @@ export default function FretboardHeader({
   inputValue,
   setInputValue,
   setBpm,
+  noteValue,
+  setNoteValue,
   theme,
 }: FretboardHeaderProps) {
   return (
@@ -89,6 +93,21 @@ export default function FretboardHeader({
           }}
           className={`w-20 ${theme.selectBg} ${theme.selectBorder} ${theme.selectText}`}
         />
+
+        {/* Selector de subdivisión */}
+        <Select value={noteValue} onValueChange={setNoteValue}>
+          <SelectTrigger
+            className={`w-32 ${theme.selectBg} ${theme.selectBorder} ${theme.selectText} cursor-pointer ${theme.selectHover}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className={`${theme.selectContentBg} ${theme.cardBorder}`}
+          >
+            <SelectItem value="quarter" className={`${theme.selectText} ${theme.selectItemHover}`}>Negra</SelectItem>
+            <SelectItem value="eighth" className={`${theme.selectText} ${theme.selectItemHover}`}>Corchea</SelectItem>
+            <SelectItem value="sixteenth" className={`${theme.selectText} ${theme.selectItemHover}`}>Semicorchea</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   )
