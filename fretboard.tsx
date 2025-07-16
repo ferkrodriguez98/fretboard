@@ -9,6 +9,7 @@ import FretboardHeader from "@/components/FretboardHeader"
 import FretboardView from "@/components/ui/FretboardView"
 import { PRACTICE_PATTERNS } from "@/lib/constants"
 import { generatePracticeSequence } from "@/lib/musicUtils"
+import SettingsModal from "@/components/ui/SettingsModal"
 
 // Notas cromáticas
 const CHROMATIC_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -338,7 +339,7 @@ export default function Component() {
 
   const [practiceMode, setPracticeMode] = useState(false)
   const [bpm, setBpm] = useState(60)
-  const [inputValue, setInputValue] = useState(bpm.toString())
+  const [inputValue, setInputValue] = useState("60")
   const [noteValue, setNoteValue] = useState("quarter") // subdivision seleccionada
   const [startNote, setStartNote] = useState("")
   const [endNote, setEndNote] = useState("")
@@ -354,6 +355,8 @@ export default function Component() {
   const [showPanel, setShowPanel] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [realViewportHeight, setRealViewportHeight] = useState(0)
+  const [volume, setVolume] = useState(0.7)
+  const [metronomeVolume, setMetronomeVolume] = useState(0.5)
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -563,15 +566,15 @@ export default function Component() {
 
       // 4. Ganancia y Mezcla
       const oscGain = audioContext.createGain()
-      oscGain.gain.value = 0.6
+      oscGain.gain.value = 0.6 * volume
 
       const subGain = audioContext.createGain()
-      subGain.gain.value = 0.4
+      subGain.gain.value = 0.4 * volume
 
       // 5. Envelope Principal (controla el volumen general)
       const masterGain = audioContext.createGain()
       masterGain.gain.setValueAtTime(0, startTime)
-      masterGain.gain.linearRampToValueAtTime(1.2, startTime + attackTime)
+      masterGain.gain.linearRampToValueAtTime(1.2 * volume, startTime + attackTime)
       masterGain.gain.exponentialRampToValueAtTime(0.01, startTime + duration)
 
       // 6. Conexiones (Routing)
@@ -591,7 +594,7 @@ export default function Component() {
     } catch (error) {
       console.log("Audio no disponible:", error)
     }
-  }, [])
+  }, [volume])
 
   // === METRONOMO CLICK ===
   const playClickSound = useCallback(() => {
@@ -612,7 +615,7 @@ export default function Component() {
       osc.frequency.setValueAtTime(2000, startTime) // click agudo
 
       const gain = audioContext.createGain()
-      gain.gain.setValueAtTime(1, startTime)
+      gain.gain.setValueAtTime(metronomeVolume, startTime)
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.05)
 
       osc.connect(gain)
@@ -623,7 +626,7 @@ export default function Component() {
     } catch (error) {
       console.log("Audio no disponible:", error)
     }
-  }, [])
+  }, [metronomeVolume])
 
   // Limpiar AudioContext al desmontar
   useEffect(() => {
@@ -830,6 +833,48 @@ export default function Component() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(107, 114, 128, 0.8);
         }
+        
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: #10b981;
+          cursor: pointer;
+          border: 2px solid #059669;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .slider::-moz-range-thumb {
+          height: 18px;
+          width: 18px;
+          border-radius: 50%;
+          background: #10b981;
+          cursor: pointer;
+          border: 2px solid #059669;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .slider::-webkit-slider-track {
+          background: #374151;
+          border: 1px solid #4b5563;
+          border-radius: 8px;
+          height: 8px;
+        }
+        
+        .slider::-moz-range-track {
+          background: #374151;
+          border: 1px solid #4b5563;
+          border-radius: 8px;
+          height: 8px;
+        }
+        
+        .slider {
+          background: #374151;
+          border: 1px solid #4b5563;
+          border-radius: 8px;
+          height: 8px;
+        }
       `}</style>
 
       <div className={`h-full flex flex-col gap-4 ${isMobile ? 'pt-12 px-4 pb-4' : 'p-4'}`}>
@@ -885,14 +930,22 @@ export default function Component() {
                         instrumentTunings={INSTRUMENT_TUNINGS}
                         selectedTuning={selectedTuning}
                         setSelectedTuning={setSelectedTuning}
-                        bpm={bpm}
-                        inputValue={inputValue}
-                        setInputValue={setInputValue}
-                        setBpm={setBpm}
-                        noteValue={noteValue}
-                        setNoteValue={setNoteValue}
                         theme={theme}
-                      />
+                      >
+                        <SettingsModal
+                          bpm={bpm}
+                          inputValue={inputValue}
+                          setInputValue={setInputValue}
+                          setBpm={setBpm}
+                          noteValue={noteValue}
+                          setNoteValue={setNoteValue}
+                          volume={volume}
+                          setVolume={setVolume}
+                          metronomeVolume={metronomeVolume}
+                          setMetronomeVolume={setMetronomeVolume}
+                          theme={theme}
+                        />
+                      </FretboardHeader>
                       <div className="flex gap-4 items-center justify-center flex-wrap">
                         <Select value={selectedRoot} onValueChange={handleRootChange}>
               <SelectTrigger
@@ -997,14 +1050,22 @@ export default function Component() {
                   instrumentTunings={INSTRUMENT_TUNINGS}
                   selectedTuning={selectedTuning}
                   setSelectedTuning={setSelectedTuning}
-                  bpm={bpm}
-                  inputValue={inputValue}
-                  setInputValue={setInputValue}
-                  setBpm={setBpm}
-                  noteValue={noteValue}
-                  setNoteValue={setNoteValue}
                   theme={theme}
-                />
+                >
+                  <SettingsModal
+                    bpm={bpm}
+                    inputValue={inputValue}
+                    setInputValue={setInputValue}
+                    setBpm={setBpm}
+                    noteValue={noteValue}
+                    setNoteValue={setNoteValue}
+                    volume={volume}
+                    setVolume={setVolume}
+                    metronomeVolume={metronomeVolume}
+                    setMetronomeVolume={setMetronomeVolume}
+                    theme={theme}
+                  />
+                </FretboardHeader>
                 <div className="flex gap-4 items-center justify-center flex-wrap">
                   <Select value={selectedRoot} onValueChange={handleRootChange}>
               <SelectTrigger
